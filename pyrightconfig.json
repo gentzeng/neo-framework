@@ -1,0 +1,6 @@
+{
+  "include": ["neof_backend_root"],
+  "pythonVersion": "3.8.10",
+  "pythonPlatform": "Linux",
+  "reportMissingImports": false
+}

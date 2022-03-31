@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "neo_framework"
+version = "0.1.0"
+description = ""
+authors = ["Georg Gentzen <gentzeng@informatik.hu-berlin.de>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^3.2.9"
+Pillow = "^8.4.0"
+djangorestframework = "^3.12.4"
+Markdown = "^3.3.6"
+django-filter = "^21.1"
+django-cors-headers = "^3.10.1"
+django-rest-knox = "^4.1.0"
+pre-commit = "^2.16.0"
+requests-html = "^0.10.0"
+flake8-print = "^4.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+pre-commit = "^2.15.0"
+flake8 = "^4.0.1"
+black = "^21.10b0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''

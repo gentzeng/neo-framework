@@ -1,0 +1,116 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" id="newsfeedBaseContainer">
+  <div class="row d-flex justity-content-center">
+    <div class="m-auto col-xxl-12 col-xl-12 col-lg-8 col-md-8 col-sm-10 col-8">
+      <button
+        type="button"
+        class="btn btn-warning"
+        id="idDeleteCaseStudyRound"
+        data-bs-toggle="modal"
+        data-bs-target="#newsfeedBaseCreateModal"
+      >
+        Delete
+      </button>
+      <button
+        type="button"
+        class="btn btn-warning ms-2"
+        id="idCreateCaseStudyRound"
+        data-bs-toggle="modal"
+        data-bs-target="#newsfeedBaseCreateModal"
+      >
+        Create newsfeedBase
+      </button>
+    </div>
+  </div>
+  -->
+
+  <div
+    class="m-auto row row-cols-xxl-4 row-cols-xl-3 row-cols-lg-3 row-cols-md-2 row-cols-sm-1 row-cols-1 g-4"
+    id="newsfeedBaseCardContainer"
+  ></div>
+  <!-- prettier-ignore -->
+  {% include 'components/newsfeedBaseModalCreate.html' %}
+</div>
+
+<script>
+  const caseStudyId = window.sessionStorage.getItem("caseStudyId")
+
+  const handleOnResponseCaseStudyRounds = function (xhr) {
+    const unauthorizedCode = function (xhr) {
+      let serverResponse = xhr.response
+      if (xhr.status == 401 || xhr.status == 403) {
+        return true
+      }
+      return false
+    }
+
+    if (unauthorizedCode(xhr)) {
+      window.location.href = {{ login }}
+      return
+    }
+
+    let newsfeedBaseIds = []
+    let serverResponse = xhr.response
+    let newsfeedBases = serverResponse.case_study_rounds
+    let newsfeedBaseCardContainer_body = document.getElementById("newsfeedBaseCardContainer")
+    let newsfeedBaseCards = ""
+
+
+    newsfeedBases.forEach( newsfeedBase => {
+      newsfeedBaseIds.push(newsfeedBase.id)
+      newsfeedBaseCards += createCaseStudyRoundCard(newsfeedBase)
+    })
+    newsfeedBaseCardContainer_body.innerHTML = newsfeedBaseCards
+    caseStudyIds.forEach( id => {
+      document.getElementById("newsfeedBaseCard" + id).onclick = function () {
+        onClickCaseStudyCard(id)
+      }
+    })
+  }
+
+  const updatePageCaseStudy = function () {
+    handleXmlRequest({
+      method: "GET",
+      url: "/case-studies/" + caseStudyId,
+      handleOnResponse: handleOnResponseCaseStudyRounds,
+      authenticate: true,
+    })
+  }
+
+  // get Rounds of CaseStudy
+  updatePageCaseStudy()
+
+  document.getElementById("idDeleteCaseStudy").onclick = function () {
+    // send new form data
+    handleXmlRequest({
+      method: "DELETE",
+      url: "/case-studies/" + caseStudyId,
+      authenticate: true,
+    })
+
+    window.location.href = "/dashboard";
+  }
+
+  document.getElementById("idCreateCaseStudyRound").onclick = function () {
+    const submitFormAction = function(event) {
+      event.preventDefault() // prevent default behavior of form submit
+      const form = event.target
+
+      formData = new FormData(form)
+      formData.append("case_study_id", caseStudyId)
+
+      // send new form data
+      handleXmlRequest({
+        method: form.getAttribute("method"),
+        url: form.getAttribute("action"),
+        toSend: formData,
+        authenticate: true,
+      })
+
+      updatePageCaseStudy()
+    }
+    const form = document.getElementById("newsfeedBaseCreateForm")
+    form.addEventListener("submit", submitFormAction)
+  }
+</script>
+{% endblock content%}

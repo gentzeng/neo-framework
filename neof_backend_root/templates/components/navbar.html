@@ -1,0 +1,108 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">NeoFramework</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/admin"
+            >Adminboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/dashboard"
+            >Dashboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/newsfeed/1/fb"
+            >Test Newsfeed</a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div>
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <li class="d-none nav-item pe-2" id="idUserItem">
+        <a class="navbar-link active text-white" id="idUser" href="#"
+          >Account</a
+        >
+      </li>
+      <li class="nav-item pe-2" id="idLogoutItem">
+        <a class="navbar-link active text-white" id="idLogout" href="#"
+          >Logout</a
+        >
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<script>
+  const getCookieValue = (name) => {
+    return (
+      document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)")?.pop() ||
+      ""
+    );
+  };
+  document.getElementById("idUser").onclick = function () {
+    const handleOnResponse = function (response) {
+      if (response.status == 204) {
+        // window.location.href = "/login"
+      } else if (response.status == 401) {
+        window.location.href = window.props.login;
+      }
+    };
+    fetch("/api/auth/user/", {
+      headers: {
+        Accept: "application/json",
+        Authorization: "Token " + getCookieValue("auth_token"),
+      },
+    })
+      .then((response) => handleOnResponse(response))
+      .catch((error) => console.error(error));
+  };
+
+  document.getElementById("idLogout").onclick = function () {
+    const handleOnResponse = function (status) {
+      if (status == 204) {
+        window.location.href = window.props.login;
+      } else if (status == 401) {
+        window.location.href = window.props.login;
+      }
+    };
+    fetch("/api/auth/logout/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: "Token " + getCookieValue("auth_token"),
+      },
+    })
+      .then((response) => handleOnResponse(response.status))
+      .catch((error) => console.error(error));
+
+    // delete cookies
+    window.props.allowedHosts.map((host) => {
+      document.cookie =
+        "user_name" +
+        `=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${host};same_side=strict`;
+      document.cookie =
+        "auth_token" +
+        `=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${host};same_side=strict`;
+    });
+  };
+  const toggleNavbarUserAndLogout = () => {
+    const userItem = document.getElementById("idUserItem");
+    const userLink = document.getElementById("idUser");
+    const logoutItem = document.getElementById("idLogoutItem");
+    const userNameCookieValue = getCookieValue("user_name");
+    if (userNameCookieValue !== "") {
+      userItem.classList.remove("d-none");
+      logoutItem.classList.remove("d-none");
+      userLink.innerHTML = userNameCookieValue;
+    } else {
+      userItem.classList.add("d-none");
+      logoutItem.classList.add("d-none");
+    }
+  };
+  toggleNavbarUserAndLogout();
+</script>

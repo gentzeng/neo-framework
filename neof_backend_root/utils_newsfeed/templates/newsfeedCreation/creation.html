@@ -1,0 +1,404 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" id="newsfeedBaseContainer">
+  <div class="row d-flex justify-content-center mb-4">
+    <div class="col-xl-10 col-lg-8 col-md-8 col-sm-8 col-8">
+      <form
+        method="POST"
+        id="newsfeed-base-creation-form"
+        action="/newsfeed/create"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="next" value="/dashboard" />
+        <div
+          class="row g-3, mb-4 pb-4 border-bottom"
+          id="postListInfoForm"
+        ></div>
+        <div class="row d-flex justify-content-center mb-4 pb-4 border-bottom">
+          <button
+            type="submit"
+            class="w-25 btn btn-primary"
+            id="buttonCreateNewsfeedBase"
+          >
+            Create NewsfeedBase
+          </button>
+        </div>
+        <div class="row mb-4 pb-4 border-bottom text-white">
+          <h5>Fixed Positions in form of "postId" : "position"</h5>
+          <textarea
+            type="text border-0"
+            id="postUsedPositionsInfo"
+            rows="1"
+            name="postUsedPositionsInfo"
+            class="text-black"
+          >
+          No positions chosen
+          </textarea>
+        </div>
+        <div class="row mb-4 pb-4 border-bottom text-white">
+          <h5>Debug Information</h5>
+          <div
+            class="d-none alert alert-danger"
+            id="debugWindow"
+            name="debugWindow"
+          ></div>
+        </div>
+        <div class="row" id="newsfeedBase">
+          <div class="col">
+            <table class="table text-white">
+              <thead>
+                <tr>
+                  <th scope="col">id</th>
+                  <th scope="col">header</th>
+                  <th scope="col">title</th>
+                  <th scope="col">content</th>
+                </tr>
+              </thead>
+              <tbody id="newsfeedBaseTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const idPrefixPostPositionSelect = "post-position-select-";
+  const caseStudyRoundId = window.sessionStorage.getItem("caseStudyRoundId");
+  class UsedPositionsInfo {
+    constructor() {
+      this.positions = {};
+    }
+    get positionList() {
+      return Object.values(this.positions).map((n) => parseInt(n));
+    }
+
+    isNotEmpty() {
+      if (
+        Object.keys(this.positions).length === 0 &&
+        this.positions.constructor === Object
+      ) {
+        return false;
+      }
+      return true;
+    }
+
+    setPosition(postId, position) {
+      let idPostPositionSelect = idPrefixPostPositionSelect + postId;
+      let selectEl = document.getElementById(idPostPositionSelect);
+
+      this.positions["" + postId] = position;
+      this.updateInfoDiv();
+    }
+
+    unsetPosition(postId) {
+      delete this.positions["" + postId];
+      this.updateInfoDiv();
+    }
+
+    updateInfoDiv() {
+      let infoDiv = document.getElementById("postUsedPositionsInfo");
+      let positionInfoStr = JSON.stringify(this.positions, undefined, 2);
+      let positionInfoStrLines = positionInfoStr.split(/\r\n|\r|\n/).length;
+      infoDiv.innerHTML = positionInfoStr;
+      infoDiv.rows = positionInfoStrLines;
+    }
+
+    toJSON() {
+      return JSON.stringify(this.positions);
+    }
+  }
+  UsedPositionsInfo.prototype.toString = function () {
+    return this.positions;
+  };
+
+  const formatPostInfo = function (postInfo) {
+    let postInfoFormStr = "";
+    Object.entries(postInfo).forEach(([key, value]) => {
+      let postInfoStr =
+        // "<div class='col'>" +
+        // "<label for='postInfoInput-" +
+        // key +
+        // "' class='form-label'>" +
+        // key +
+        // "</label>" +
+        // "<input required='required' type='number' class='form-control' id='postInfoInput-" +
+        // key +
+        // "' placeholder='" +
+        // value +
+        // "' value='" +
+        // value +
+        // "'" +
+        // " name='" +
+        // key +
+        // "'" +
+        // ">" +
+        // "</div>";
+
+        (postInfoFormStr += postInfoStr);
+    });
+    return postInfoFormStr;
+  };
+
+  const formatPost = function (post) {
+    console.log(post.image);
+    // let postFmt = "<div class='mb-4 pb-4 border-bottom' id='post-" + post.id + "'>"
+    //     + "<h3>" + post.title + " </h3>"
+    //     + "<p>" + post.header + "</p>"
+    //     + "<div class='d-flex justify-content-center'>"
+    //     + "<img class='img-fluid' src='" + post.image + "' alt='" + post.title + "'>"
+    //     + "</div>"
+    //     + postPositionForm(post)
+    //   + "</div>"
+    let postFmt =
+      // "" +
+      // "<div class='col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2 mb-4 pb-4'>" +
+      // "  <div class='card text-white bg-dark h-100'" +
+      // "id='post-" +
+      // post.id +
+      // "'>" +
+      // "    <div class='card-body'>" +
+      // "      <h5 class='card-title'> postID: " +
+      // post.id +
+      // " </h5>" +
+      // "      <p class='card-text'>" +
+      // post.title +
+      // " </p>" +
+      // "    </div>" +
+      // "      <div class='row m-2'>" +
+      // postPositionForm(post) +
+      // "      </div>" +
+      // "  </div>" +
+      // "</div>";
+      "<tr>" +
+      "<th scope='row'>" +
+      post.id +
+      "</th>" +
+      "<td>" +
+      post.header +
+      "</td>" +
+      "<td>" +
+      post.title +
+      "</td>" +
+      "<td>" +
+      post.content +
+      "</td>" +
+      "</tr>";
+    return postFmt;
+  };
+
+  const postPositionForm = function (post) {
+    let form =
+      "<select class='form-select form-post-" +
+      post.id +
+      "'" +
+      " id='" +
+      idPrefixPostPositionSelect +
+      post.id +
+      "'" +
+      " name='" +
+      idPrefixPostPositionSelect +
+      post.id +
+      "'" +
+      "aria-label='Default select example'>" +
+      "<option value='0'>Fixed position or exclude</option>" +
+      "</select>";
+    return form;
+  };
+
+  const actionPosition = function () {
+    let position = this.value;
+    let postId = this.id.replace(/post-position-select-(.*)$/, "$1");
+    if (position == 0) {
+      deSelectPosition(postId, position);
+      return;
+    }
+    selectPosition(postId, position);
+
+    return;
+
+    function selectPosition(postId, position) {
+      usedPositionsInfo.setPosition(postId, position);
+      setPositionOptions();
+    }
+
+    function deSelectPosition(postId, position) {
+      {
+      }
+      usedPositionsInfo.unsetPosition(postId);
+      unsetPositionOptions();
+    }
+  };
+
+  const setPositionOptions = function () {
+    postList.forEach((post) => {
+      setPositionOption(post.id);
+    });
+
+    function setPositionOption(postId) {
+      let idPostPositionSelect = idPrefixPostPositionSelect + postId;
+      let selectEl = document.getElementById(idPostPositionSelect);
+      let usedPositions = usedPositionsInfo.positionList;
+
+      usedPositions.forEach((pos) => {
+        let opt = selectEl.options[pos + 1];
+        opt.disabled = true;
+      });
+    }
+  };
+
+  const unsetPositionOptions = function () {
+    postList.forEach((post) => {
+      unsetPositionOption(post.id);
+    });
+
+    function unsetPositionOption(postId) {
+      let idPostPositionSelect = idPrefixPostPositionSelect + postId;
+      let selectEl = document.getElementById(idPostPositionSelect);
+      let usedPositions = usedPositionsInfo.positionList;
+      let unusedPositions = positions.filter((n) => !usedPositions.includes(n));
+
+      unusedPositions.forEach((pos) => {
+        let opt = selectEl.options[pos + 1];
+        opt.disabled = false;
+      });
+    }
+  };
+
+  const initPositionOptions = function () {
+    postList.forEach((post) => {
+      initPositionOption(post.id);
+    });
+
+    function initPositionOption(postId) {
+      let idPostPositionSelect = idPrefixPostPositionSelect + postId;
+      let selectEl = document.getElementById(idPostPositionSelect);
+      selectEl.onchange = actionPosition;
+
+      let opt = document.createElement("option");
+      opt.value = "-1";
+      opt.text = "Exclude from newsfeed";
+      selectEl.add(opt, null);
+
+      for (let i = 1; i <= postInfo.newsfeed_size; i++) {
+        let opt = document.createElement("option");
+        opt.value = "" + i;
+        opt.text = "Position: " + i;
+        selectEl.add(opt, null);
+      }
+    }
+  };
+
+  let usedPositionsInfo = new UsedPositionsInfo();
+  let postList = [];
+  let postInfo = [];
+  let positions = [];
+  let newsfeedSize = 0;
+
+  const handleOnResponseGetPostManual = function (xhr) {
+    const serverResponse = xhr.response;
+    postList = serverResponse;
+    positions = [...Array(newsfeedSize + 1).keys()].slice(0);
+    let finalPostInfoStr = "";
+    let finalNewsfeedBaseStr = "";
+
+    // finalPostInfoStr = formatPostInfo(postInfo);
+
+    postList.forEach((post) => {
+      finalNewsfeedBaseStr += formatPost(post);
+    });
+
+    // document.getElementById("postListInfoForm").innerHTML = finalPostInfoStr;
+    document.getElementById("newsfeedBaseTableBody").innerHTML =
+      finalNewsfeedBaseStr;
+
+    initPositionOptions();
+  };
+
+  const handleOnResponseGetNewsfeedSelectionSettings = function (xhr) {
+    const serverResponse = xhr.response;
+    newsfeedSize = serverResponse.newsfeed_selection_setting.newsfeed_size;
+
+    handleXmlRequest({
+      method: "GET",
+      url: "/post-manual/",
+      handleOnResponse: handleOnResponseGetPostManual,
+      authenticate: true,
+    });
+  };
+
+  handleXmlRequest({
+    method: "GET",
+    url: "/case-study-round/" + caseStudyRoundId,
+    handleOnResponse: handleOnResponseGetNewsfeedSelectionSettings,
+    authenticate: true,
+  });
+
+  const getNewsfeedBaseCreationFormData = function (form) {
+    const formDataRaw = new FormData(form);
+
+    const formData = new FormData();
+    for (let formItem of formDataRaw.entries()) {
+      const formItemName = formItem[0];
+
+      if (formItemName.startsWith("post-position-select")) {
+        continue;
+      }
+
+      if (formItemName === "postUsedPositionsInfo") {
+        if (usedPositionsInfo.isNotEmpty()) {
+          formData.append("post_position_info", usedPositionsInfo.toJSON());
+        }
+        continue;
+      }
+
+      const formItemValue = formDataRaw.get(formItemName);
+      formData.append(formItemName, formItemValue);
+    }
+
+    return formData;
+  };
+
+  const setActionOnResponse = function (xhr) {
+    if (xhr.status === 201) {
+      updateErrorWindow("debugWindow", false, "");
+    } else if (xhr.status === 400) {
+      let errorMsg = "";
+      Object.entries(xhr.response).forEach(([key, value]) => {
+        errorMsg += key + ": " + value + "\r\n";
+      });
+      updateErrorWindow("debugWindow", true, errorMsg);
+    } else if (xhr.status === 401) {
+      alert("You must login!");
+      // window.location.href = "/login"
+    } else if (xhr.status === 500) {
+      updateErrorWindow(
+        "debugWindow",
+        true,
+        "There was a server error! Please try again!"
+      );
+    }
+  };
+
+  const submitFormAction = function (event) {
+    event.preventDefault(); // prevent default behavior of form submit
+    const form = event.target;
+
+    const formData = getNewsfeedBaseCreationFormData(form);
+
+    handleXmlRequest({
+      method: form.getAttribute("method"),
+      url: form.getAttribute("action"),
+      handleOnResponse: setActionOnResponse,
+      toSend: formData,
+      authenticate: true,
+    });
+
+    xhr.send(formData);
+  };
+
+  const form = document.getElementById("newsfeed-base-creation-form");
+  form.addEventListener("submit", submitFormAction);
+</script>
+
+{% endblock content %}

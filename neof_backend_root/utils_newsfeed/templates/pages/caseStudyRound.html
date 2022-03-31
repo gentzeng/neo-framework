@@ -1,0 +1,130 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container" id="caseStudyRoundContainer">
+  <div class="row d-flex justity-content-center">
+    <div class="m-auto col-xxl-12 col-xl-12 col-lg-8 col-md-8 col-sm-10 col-8">
+      <button type="button" class="btn btn-warning" id="idDeleteCaseStudyRound">
+        Delete
+      </button>
+      <button
+        type="button"
+        class="btn btn-warning ms-2"
+        id="idCreateNewsfeedBase"
+        data-bs-toggle="modal"
+        data-bs-target="#newsfeedSelectionSettingsModal"
+      >
+        Create NewsfeedBase
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="m-auto row row-cols-xxl-4 row-cols-xl-3 row-cols-lg-3 row-cols-md-2 row-cols-sm-1 row-cols-1 g-4"
+    id="newsfeedSettingContainer"
+  ></div>
+  <!-- prettier-ignore -->
+  {% include 'components/newsfeedSelectionSettingsModal.html' %}
+</div>
+
+<script>
+  const createNewsfeedSelectionSettingCard = function (newsfeedSelectionSetting) {
+    let newsfeedSelectionSettingCard =
+      "" +
+      "<div class='col'>" +
+      "<div class='card cursor-pointer h-100 text-black bg-warning mb-3'>" +
+      "<div class='card-header'>NewsfeedSelectionSetting</div>" +
+      "<div class='card-body pb-0'>" +
+      // "<h6 class='card-title'>" +
+      // caseStudy.name +
+      // "</h6>" +
+      "<div class='card-text'>" +
+      "<table class='table table-dark text-white'>" +
+      "<tbody>" +
+      formatCardTableItems(newsfeedSelectionSetting) +
+      "</tbody>" +
+      "</table>" +
+      "</div>" +
+      "</div>" +
+      "</div>" +
+      "</div>";
+
+    return newsfeedSelectionSettingCard
+  }
+  const caseStudyRoundId = window.sessionStorage.getItem("caseStudyRoundId")
+  let newsfeedSelectionSetting = {}
+
+  const handleOnResponseCaseStudyRounds = function (xhr) {
+    if (unauthorizedCode(xhr)) {
+      window.location.href = {{ login }}
+      return
+    }
+
+    const serverResponse = xhr.response
+    if (serverResponse.newsfeed_selection_setting == null) {
+      return
+    }
+
+    let newsfeedSelectionSettingCard = ""
+    newsfeedSelectionSetting = serverResponse.newsfeed_selection_setting
+    let newsfeed_size = newsfeedSelectionSetting.newsfeed_size
+
+    let newsfeedSelectionSettingObject = { "newsfeed_size" : newsfeed_size}
+
+    newsfeedSelectionSettingCard = createNewsfeedSelectionSettingCard({
+      itemObject: newsfeedSelectionSettingObject,
+    })
+
+    const newsfeedSettingContainer_body = document.getElementById("newsfeedSettingContainer")
+    newsfeedSettingContainer_body.innerHTML = newsfeedSelectionSettingCard
+  }
+
+  const deleteCaseStudy = function () {
+    // send new form data
+    handleXmlRequest({
+      method: "DELETE",
+      url: "/case-study-round/" + caseStudyRoundId,
+      authenticate: true,
+    })
+
+    window.location.href = "/case-study-manage";
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("idDeleteCaseStudyRound").onclick = deleteCaseStudy
+
+
+    handleXmlRequest({
+      method: "GET",
+      url: "/case-study-round/" + caseStudyRoundId,
+      handleOnResponse: handleOnResponseCaseStudyRounds,
+      authenticate: true,
+    })
+
+    document.getElementById("idCreateNewsfeedBase").onclick = function () {
+      const submitFormAction = function(event) {
+        event.preventDefault() // prevent default behavior of form submit
+        const form = event.target
+
+        let formData = new FormData(form)
+        formData.append("case_study_round_id", caseStudyRoundId)
+
+        handleXmlRequest({
+          method: form.getAttribute("method"),
+          url: form.getAttribute("action"),
+          toSend: formData,
+          authenticate: true,
+        })
+        window.location.href = "/newsfeed/creation"
+
+      }
+      const form = document.getElementById("newsfeedSelectionSettingForm")
+      console.log("joo", newsfeedSelectionSetting)
+      if (newsfeedSelectionSetting === {}) {
+        form.addEventListener("submit", submitFormAction)
+        return
+      }
+      console.log("joo", newsfeedSelectionSetting)
+      window.location.href = "/newsfeed/creation"
+    }
+  })
+</script>
+{% endblock content%}
